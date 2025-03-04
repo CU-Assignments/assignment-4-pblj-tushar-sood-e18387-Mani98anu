@@ -1,0 +1,56 @@
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+class TicketBookingSystem {
+    private static final int TOTAL_SEATS = 10;
+    private boolean[] seats = new boolean[TOTAL_SEATS];
+    private Lock lock = new ReentrantLock();
+
+    public void bookSeat(int seatNumber, String name) {
+        lock.lock();
+        try {
+            if (seatNumber < 0 || seatNumber >= TOTAL_SEATS || seats[seatNumber]) {
+                System.out.println(name + " failed to book seat " + seatNumber);
+            } else {
+                seats[seatNumber] = true;
+                System.out.println(name + " successfully booked seat " + seatNumber);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+class BookingThread extends Thread {
+    private TicketBookingSystem system;
+    private int seatNumber;
+    private String name;
+
+    public BookingThread(TicketBookingSystem system, int seatNumber, String name, int priority) {
+        this.system = system;
+        this.seatNumber = seatNumber;
+        this.name = name;
+        setPriority(priority);
+    }
+
+    public void run() {
+        system.bookSeat(seatNumber, name);
+    }
+}
+
+public class TicketBookingApp {
+    public static void main(String[] args) {
+        TicketBookingSystem system = new TicketBookingSystem();
+        Thread vip1 = new BookingThread(system, 2, "VIP-1", Thread.MAX_PRIORITY);
+        Thread vip2 = new BookingThread(system, 4, "VIP-2", Thread.MAX_PRIORITY);
+        Thread user1 = new BookingThread(system, 2, "User-1", Thread.MIN_PRIORITY);
+        Thread user2 = new BookingThread(system, 5, "User-2", Thread.NORM_PRIORITY);
+        Thread user3 = new BookingThread(system, 4, "User-3", Thread.NORM_PRIORITY);
+        
+        vip1.start();
+        vip2.start();
+        user1.start();
+        user2.start();
+        user3.start();
+    }
+}
